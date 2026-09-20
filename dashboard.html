@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novelinha Automation — Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0e17; --bg2:#0f1420; --card:#131a2a; --card-border:#1f2940;
+    --text:#e8ecf4; --muted:#8b96ad; --accent:#00e5c7; --accent2:#ff3d81;
+    --accent3:#7c5cff; --yellow:#ffcc4d; --green:#3ddc84; --red:#ff5c6c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(124,92,255,0.15), transparent 40%),
+      radial-gradient(circle at 85% 10%, rgba(0,229,199,0.12), transparent 40%),
+      var(--bg);
+    color:var(--text);min-height:100vh;padding:32px 24px 60px;
+  }
+  .wrap{max-width:1240px;margin:0 auto;}
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;
+    margin-bottom:28px;border-bottom:1px solid var(--card-border);padding-bottom:24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brand-icon{
+    width:48px;height:48px;border-radius:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent3));
+    display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0a0e17;
+    box-shadow:0 0 24px rgba(0,229,199,0.4);
+  }
+  h1{font-size:22px;margin:0;letter-spacing:0.3px;}
+  .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+  .updated{font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--card-border);padding:8px 14px;border-radius:999px;}
+  .updated b{color:var(--accent);}
+
+  .section-title{
+    font-size:14px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+    margin:38px 0 14px;font-weight:600;display:flex;align-items:center;gap:10px;
+  }
+  .section-title .hint{
+    text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--muted);opacity:0.75;font-weight:400;
+  }
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .kpi{
+    background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--card-border);
+    border-radius:16px;padding:20px;position:relative;overflow:hidden;
+  }
+  .kpi::after{
+    content:'';position:absolute;top:-40%;right:-30%;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle,var(--glow,rgba(0,229,199,0.18)),transparent 70%);
+  }
+  .kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .kpi .value{font-size:28px;font-weight:800;margin-top:8px;}
+  .kpi .delta{font-size:12px;margin-top:6px;color:var(--green);}
+
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:850px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-card{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:20px 22px;}
+  .chart-card h3{margin:0 0 18px;font-size:14px;color:var(--text);font-weight:600;}
+  .barchart{display:flex;flex-direction:column;gap:14px;}
+  .barrow{display:grid;grid-template-columns:150px 1fr 74px;align-items:center;gap:10px;}
+  .barrow .blabel{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bartrack{position:relative;height:20px;background:rgba(255,255,255,0.04);border-radius:5px;overflow:hidden;}
+  .barfill{position:absolute;left:0;top:0;height:100%;border-radius:5px 8px 8px 5px;min-width:4px;transition:width .3s ease;}
+  .barrow .bvalue{font-size:12.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;}
+  .barrow .bvalue.muted{color:var(--muted);font-weight:500;}
+
+  .platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;}
+  .pcard{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:22px;}
+  .pcard .phead{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .plogo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .pname{font-weight:700;font-size:16px;}
+  .pstatus{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600;display:inline-block;margin-top:2px;}
+  .pstatus.ok{background:rgba(61,220,132,0.15);color:var(--green);}
+  .pstatus.warn{background:rgba(255,204,77,0.15);color:var(--yellow);}
+  .pstatus.pending{background:rgba(139,150,173,0.15);color:var(--muted);}
+  .prow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--card-border);font-size:13.5px;}
+  .prow:last-child{border-bottom:none;}
+  .prow span:first-child{color:var(--muted);}
+  .prow span:last-child{font-weight:600;text-align:right;}
+
+  .table-card{background:var(--card);border:1px solid var(--card-border);border-radius:18px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;padding:14px 18px;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:1px;border-bottom:1px solid var(--card-border);}
+  td{padding:13px 18px;border-bottom:1px solid var(--card-border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .rank{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:rgba(0,229,199,0.12);color:var(--accent);}
+  .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(124,92,255,0.15);color:#b8a6ff;margin-left:6px;}
+  .badge-review{background:rgba(255,204,77,0.15);color:var(--yellow);font-size:10px;padding:2px 8px;border-radius:6px;margin-left:6px;}
+  .badge-dup{background:rgba(255,92,108,0.15);color:var(--red);font-size:10px;padding:2px 8px;border-radius:6px;margin-left:6px;}
+  .badge-ok{background:rgba(61,220,132,0.15);color:var(--green);font-size:10px;padding:2px 8px;border-radius:6px;margin-left:6px;}
+  .vlink{color:var(--text);text-decoration:none;display:flex;align-items:center;gap:8px;}
+  .vlink:hover .vtitle{color:var(--accent);text-decoration:underline;}
+  .playicon{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .playicon svg{width:9px;height:9px;}
+  .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13.5px;}
+
+  .pipeline{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;}
+  .step{position:relative;padding-left:26px;}
+  .step::before{content:'';position:absolute;left:0;top:2px;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .step h4{margin:0 0 4px;font-size:13.5px;}
+  .step p{margin:0;font-size:12px;color:var(--muted);line-height:1.5;}
+
+  footer{margin-top:48px;text-align:center;color:var(--muted);font-size:12px;}
+  .note{background:rgba(255,204,77,0.08);border:1px solid rgba(255,204,77,0.25);border-radius:12px;padding:14px 18px;font-size:12.5px;color:#ffd873;margin-top:16px;}
+  .note.red{background:rgba(255,92,108,0.08);border-color:rgba(255,92,108,0.3);color:#ffb3ba;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <div>
+        <h1>Novelinha Automation</h1>
+        <div class="sub">Dashboard de conteúdo, engajamento e faturamento</div>
+      </div>
+    </div>
+    <div class="updated">Dados de monetização coletados em <b>20/09/2026</b> direto de cada plataforma</div>
+  </header>
+
+  <div class="note red" id="dup-alert" style="display:none;">
+    ⚠️ Correção aplicada: o vídeo de teste foi postado por engano nas duas páginas do Facebook (Acesso Viral e Conteúdo Viral). Isso já foi corrigido na automação — a partir de agora cada vídeo vai para apenas uma página.
+  </div>
+
+  <div class="section-title">Visão Geral</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="section-title">Faturamento e alcance <span class="hint">— comparativo entre plataformas</span></div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Faturamento por plataforma (US$, últimos ~30 dias)</h3>
+      <div class="barchart" id="chartRevenue"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Seguidores por plataforma</h3>
+      <div class="barchart" id="chartFollowers"></div>
+    </div>
+  </div>
+
+  <div class="section-title">Plataformas conectadas</div>
+  <div class="platform-grid">
+
+    <div class="pcard">
+      <div class="phead">
+        <div class="plogo" style="background:#000;">
+          <svg width="24" height="24" viewBox="0 0 48 48"><path fill="#25F4EE" d="M33 7c1.6 4.4 5 7.4 9.6 7.8v6.4c-3.5 0-6.7-1.1-9.6-3.1v13.8c0 7.2-5.8 13.1-13.1 13.1S6.8 39.1 6.8 31.9 12.6 18.8 19.9 18.8c.7 0 1.4.06 2 .17v6.7a6.6 6.6 0 1 0 4.6 6.3V4h6.5z"/><path fill="#FE2C55" d="M31 5c1.6 4.4 5 7.4 9.6 7.8v6.4c-3.5 0-6.7-1.1-9.6-3.1v13.8c0 7.2-5.8 13.1-13.1 13.1S4.8 37.1 4.8 29.9 10.6 16.8 17.9 16.8c.7 0 1.4.06 2 .17v6.7a6.6 6.6 0 1 0 4.6 6.3V2h6.5z"/><path fill="#fff" d="M32 6c1.6 4.4 5 7.4 9.6 7.8v6.4c-3.5 0-6.7-1.1-9.6-3.1v13.8c0 7.2-5.8 13.1-13.1 13.1S5.8 38.1 5.8 30.9 11.6 17.8 18.9 17.8c.7 0 1.4.06 2 .17v6.7a6.6 6.6 0 1 0 4.6 6.3V3h6.5z"/></svg>
+        </div>
+        <div>
+          <div class="pname">TikTok</div>
+          <span class="pstatus ok">● Ativo e monetizado</span>
+        </div>
+      </div>
+      <div class="prow"><span>Seguidores</span><span>46 mil (+4,9 mil/7d)</span></div>
+      <div class="prow"><span>Visualizações (7 dias)</span><span>1,5 mi</span></div>
+      <div class="prow"><span>Curtidas (7 dias)</span><span>40,4 mil</span></div>
+      <div class="prow"><span>Publicações totais</span><span>122</span></div>
+      <div class="prow"><span>Faturamento (30 dias)</span><span>US$ 454,53</span></div>
+      <div class="prow"><span>Fonte da receita</span><span>100% Recompensas do Criador</span></div>
+    </div>
+
+    <div class="pcard">
+      <div class="phead">
+        <div class="plogo" style="background:#1877F2;">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#fff" d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06C2 17.08 5.66 21.23 10.44 22v-7.03H7.9v-2.91h2.54V9.86c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.44 2.91h-2.34V22C18.34 21.23 22 17.08 22 12.06z"/></svg>
+        </div>
+        <div>
+          <div class="pname">Facebook</div>
+          <span class="pstatus ok">● Ativo e monetizado</span>
+        </div>
+      </div>
+      <div class="prow"><span>Página Acesso Viral</span><span>262 mil seguidores</span></div>
+      <div class="prow"><span>Página Conteúdo Viral</span><span>232 mil seguidores</span></div>
+      <div class="prow"><span>Ganhos (1–20 set)</span><span>US$ 24,99</span></div>
+      <div class="prow"><span>Já repassado (histórico)</span><span>US$ 24,77</span></div>
+      <div class="prow"><span>Regra ativa</span><span>1 vídeo por página, nunca as duas</span></div>
+    </div>
+
+    <div class="pcard">
+      <div class="phead">
+        <div class="plogo" style="background:#FF0000;">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#fff" d="M21.6 7.2s-.2-1.5-.8-2.2c-.8-.9-1.7-.9-2.1-1C15.9 3.8 12 3.8 12 3.8h0s-3.9 0-6.7.2c-.4 0-1.3.1-2.1 1-.6.7-.8 2.2-.8 2.2S2.2 9 2.2 10.7v1.6c0 1.7.2 3.5.2 3.5s.2 1.5.8 2.2c.8.9 1.9.9 2.4 1 1.7.2 7.4.2 7.4.2s3.9 0 6.7-.2c.4 0 1.3-.1 2.1-1 .6-.7.8-2.2.8-2.2s.2-1.7.2-3.5v-1.6c0-1.7-.2-3.5-.2-3.5zM9.8 14.9V8.9l5.6 3-5.6 3z"/></svg>
+        </div>
+        <div>
+          <div class="pname">YouTube</div>
+          <span class="pstatus warn">● Ainda não monetizado</span>
+        </div>
+      </div>
+      <div class="prow"><span>Canal</span><span>Acesso Viral</span></div>
+      <div class="prow"><span>Inscritos</span><span>23.549</span></div>
+      <div class="prow"><span>Faturamento</span><span>US$ 0,00</span></div>
+      <div class="prow"><span>Status</span><span>Em progresso p/ elegibilidade</span></div>
+    </div>
+
+    <div class="pcard">
+      <div class="phead">
+        <div class="plogo" style="background:linear-gradient(135deg,#FF9E2C,#FF6A00);">
+          <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#fff"/><circle cx="9" cy="10.5" r="1.4" fill="#FF6A00"/><circle cx="15" cy="10.5" r="1.4" fill="#FF6A00"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#FF6A00" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="pname">Kwai</div>
+          <span class="pstatus pending">● Aguardando login</span>
+        </div>
+      </div>
+      <div class="prow"><span>Postagens automáticas</span><span>Bloqueadas (login pendente)</span></div>
+      <div class="prow"><span>Monetização</span><span>Não acessível pelo navegador</span></div>
+      <div class="prow"><span>Próximo passo</span><span>Confirmar login no app/site</span></div>
+    </div>
+
+  </div>
+
+  <div class="section-title">Postado hoje <span class="hint" id="today-label"></span></div>
+  <div class="table-card">
+    <table id="today-table">
+      <thead><tr><th>Hora</th><th>Vídeo</th><th>Bloco</th><th>Plataforma / Página</th><th>Status</th></tr></thead>
+      <tbody id="today-body"></tbody>
+    </table>
+    <div class="empty-state" id="today-empty" style="display:none;">Nenhuma postagem registrada hoje ainda.</div>
+  </div>
+
+  <div class="section-title">Top 5 vídeos (TikTok, por visualizações) <span class="hint">— clique para assistir</span></div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>#</th><th>Vídeo</th><th>Visualizações</th><th>Curtidas</th><th>Comentários</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="rank">1</span></td>
+          <td><a class="vlink" href="https://www.tiktok.com/@conteudo.viral11/video/7624253317660544274" target="_blank" rel="noopener">
+            <span class="playicon"><svg viewBox="0 0 24 24" fill="#0a0e17"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="vtitle">Eles se deram mal no final</span><span class="tag">#mininovelas #comedia #drama</span><span class="badge-review">em análise</span>
+          </a></td>
+          <td>2,4 mi</td><td>33 mil</td><td>393</td>
+        </tr>
+        <tr>
+          <td><span class="rank">2</span></td>
+          <td><a class="vlink" href="https://www.tiktok.com/@conteudo.viral11/video/7665712976145435922" target="_blank" rel="noopener">
+            <span class="playicon"><svg viewBox="0 0 24 24" fill="#0a0e17"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="vtitle">Ela se deu mal no final</span><span class="tag">#mininovelas #comedia</span>
+          </a></td>
+          <td>1,2 mi</td><td>74 mil</td><td>1.698</td>
+        </tr>
+        <tr>
+          <td><span class="rank">3</span></td>
+          <td><a class="vlink" href="https://www.tiktok.com/@conteudo.viral11/video/7660898899380538632" target="_blank" rel="noopener">
+            <span class="playicon"><svg viewBox="0 0 24 24" fill="#0a0e17"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="vtitle">Ela se arrependeu no final</span><span class="tag">#drama</span>
+          </a></td>
+          <td>961 mil</td><td>15 mil</td><td>143</td>
+        </tr>
+        <tr>
+          <td><span class="rank">4</span></td>
+          <td><a class="vlink" href="https://www.tiktok.com/@conteudo.viral11/video/7684000833087802631" target="_blank" rel="noopener">
+            <span class="playicon"><svg viewBox="0 0 24 24" fill="#0a0e17"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="vtitle">E se deu mal no final</span><span class="tag">#mininovela</span>
+          </a></td>
+          <td>583 mil</td><td>12 mil</td><td>68</td>
+        </tr>
+        <tr>
+          <td><span class="rank">5</span></td>
+          <td><a class="vlink" href="https://www.tiktok.com/@conteudo.viral11/video/7634282702149029127" target="_blank" rel="noopener">
+            <span class="playicon"><svg viewBox="0 0 24 24" fill="#0a0e17"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="vtitle">Ela se arrependeu no final</span><span class="tag">#drama #comedia</span>
+          </a></td>
+          <td>562 mil</td><td>15 mil</td><td>313</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">⚠️ O vídeo #1 está marcado como "conteúdo sob análise" pelo TikTok — vale acompanhar para garantir que não haja restrição na página.</div>
+
+  <div class="section-title">Status do pipeline de automação</div>
+  <div class="pipeline">
+    <div class="step"><h4>Postagem automática</h4><p>Tarefa agendada roda 3x ao dia (12h, 17h, 23h) verificando a pasta Prontos_Postar e publicando nos perfis conectados.</p></div>
+    <div class="step"><h4>Vídeos novos (Drive)</h4><p>A cada rodada, verifica a pasta do Drive por vídeos gravados pelo usuário, baixa, prepara e joga no fluxo normal de postagem.</p></div>
+    <div class="step"><h4>Edição anti-cópia</h4><p>Cada vídeo recebe variações únicas por plataforma (espelhamento, zoom, cor, velocidade, legenda) antes de publicar.</p></div>
+    <div class="step"><h4>Stories</h4><p>Publicação automática nos Stories de cada plataforma que oferecer o recurso, junto com o post principal.</p></div>
+    <div class="step"><h4>Regras de segurança</h4><p>Vídeos já postados manualmente no TikTok/Kwai não são reenviados a essas redes. Conteúdo com agressão/sangue nunca vai para o TikTok. Cada vídeo pertence a apenas uma página do Facebook.</p></div>
+    <div class="step"><h4>Comentários</h4><p>Respostas a comentários preparadas em lote e enviadas com aprovação prévia — nunca automaticamente sem revisão.</p></div>
+  </div>
+
+  <footer>
+    Dashboard gerado a partir dos dados reais das páginas de monetização (TikTok Studio, Facebook Painel Profissional, YouTube Studio) e do log de postagens da automação.<br>
+    Kwai ainda não possui dados de faturamento — monetização desse app só é visível dentro do próprio aplicativo.
+  </footer>
+
+</div>
+
+<!-- DASHBOARD_DATA_START — a tarefa agendada edita SÓ o conteúdo entre estes marcadores (não mexe no resto do arquivo) -->
+<script>
+const DASHBOARD_DATA = {
+  atualizado_em: "2026-09-20",
+  kpis: {
+    faturamento_total_usd: 479.52,
+    seguidores_totais_label: "~834 mil",
+    tiktok_views_7d_label: "1,5 mi",
+    tiktok_views_7d_delta_label: "+61,4% vs. período anterior",
+    video_top_views_label: "2,4 mi views",
+    video_top_status: "TikTok · em análise de conteúdo"
+  },
+  faturamento: [
+    { plataforma: "TikTok", valor: 454.53, cor: "#25F4EE", label: "US$ 454,53" },
+    { plataforma: "Facebook", valor: 24.99, cor: "#1877F2", label: "US$ 24,99" },
+    { plataforma: "YouTube", valor: 0, cor: "#FF4D4D", label: "US$ 0,00" },
+    { plataforma: "Kwai", valor: null, cor: "#FF9D4D", label: "sem dados" }
+  ],
+  seguidores: [
+    { plataforma: "Facebook — Acesso Viral", valor: 262000, cor: "#1877F2", label: "262 mil" },
+    { plataforma: "Facebook — Conteúdo Viral", valor: 232000, cor: "#4E9CFB", label: "232 mil" },
+    { plataforma: "TikTok", valor: 46000, cor: "#25F4EE", label: "46 mil" },
+    { plataforma: "YouTube", valor: 23549, cor: "#FF4D4D", label: "23,5 mil" }
+  ]
+};
+</script>
+<!-- DASHBOARD_DATA_END -->
+
+<!-- POSTAGENS_LOG_START — a tarefa agendada edita SÓ o conteúdo entre estes marcadores (não mexe no resto do arquivo) -->
+<script>
+const POSTAGENS_LOG = [
+  {
+    data: "2026-09-20",
+    hora: "14:32",
+    video: "teste_compactado.mp4",
+    bloco: "1/2",
+    observacao: "Publicação de teste do pipeline. O bloco foi postado por engano nas duas páginas do Facebook — corrigido: a partir de agora cada vídeo vai para apenas uma página.",
+    plataformas: [
+      { plataforma: "facebook", pagina: "Acesso Viral", status: "publicado" },
+      { plataforma: "facebook", pagina: "Conteúdo Viral", status: "publicado (duplicado — erro corrigido)" },
+      { plataforma: "youtube", pagina: "Acesso Viral", status: "publicado" }
+    ]
+  }
+];
+</script>
+<!-- POSTAGENS_LOG_END -->
+
+<script>
+(function(){
+  // ---- KPIs + gráficos de barra (100% HTML/CSS, sem bibliotecas externas) ----
+  const data = (typeof DASHBOARD_DATA !== 'undefined') ? DASHBOARD_DATA : null;
+  if (data){
+    document.getElementById('kpi-grid').innerHTML = `
+      <div class="kpi" style="--glow:rgba(0,229,199,0.25)">
+        <div class="label">Faturamento total (~30 dias)</div>
+        <div class="value">≈ US$ ${data.kpis.faturamento_total_usd.toFixed(2).replace('.', ',')}</div>
+        <div class="delta">TikTok + Facebook (YouTube ainda não monetiza)</div>
+      </div>
+      <div class="kpi" style="--glow:rgba(255,61,129,0.2)">
+        <div class="label">Seguidores (todas as plataformas)</div>
+        <div class="value">${data.kpis.seguidores_totais_label}</div>
+        <div class="delta">soma de TikTok, Facebook e YouTube</div>
+      </div>
+      <div class="kpi" style="--glow:rgba(124,92,255,0.25)">
+        <div class="label">Visualizações no TikTok (7 dias)</div>
+        <div class="value">${data.kpis.tiktok_views_7d_label}</div>
+        <div class="delta">${data.kpis.tiktok_views_7d_delta_label}</div>
+      </div>
+      <div class="kpi" style="--glow:rgba(255,204,77,0.2)">
+        <div class="label">Vídeo de maior alcance</div>
+        <div class="value">${data.kpis.video_top_views_label}</div>
+        <div class="delta" style="color:var(--yellow)">${data.kpis.video_top_status}</div>
+      </div>`;
+
+    renderBarChart('chartRevenue', data.faturamento, v => 'US$ ' + v.toFixed(2).replace('.', ','));
+    renderBarChart('chartFollowers', data.seguidores, v => v >= 1000 ? (v/1000).toFixed(0) + ' mil' : String(v));
+  }
+
+  function renderBarChart(elId, rows, formatFn){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const max = Math.max(...rows.map(r => r.valor || 0), 1);
+    el.innerHTML = rows.map(r => {
+      const pct = r.valor ? Math.max((r.valor / max) * 100, 2) : 0;
+      const valueLabel = r.label || (r.valor == null ? 'sem dados' : formatFn(r.valor));
+      const muted = r.valor ? '' : 'muted';
+      return `
+        <div class="barrow">
+          <div class="blabel" title="${r.plataforma}">${r.plataforma}</div>
+          <div class="bartrack"><div class="barfill" style="width:${pct}%;background:${r.cor};"></div></div>
+          <div class="bvalue ${muted}">${valueLabel}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---- Postado hoje ----
+  const log = (typeof POSTAGENS_LOG !== 'undefined') ? POSTAGENS_LOG : [];
+  const todayStr = new Date().toISOString().slice(0,10);
+  const todayEntries = log.filter(e => e.data === todayStr);
+  const tbody = document.getElementById('today-body');
+  const empty = document.getElementById('today-empty');
+  const label = document.getElementById('today-label');
+  label.textContent = '— ' + todayStr;
+
+  let hasDup = false;
+  if (todayEntries.length === 0){
+    // fallback: se não houver post de hoje exato, mostra o mais recente do log como referência
+    if (log.length){
+      renderRows(log.slice(0,1));
+      label.textContent = '— último registro: ' + log[0].data;
+    } else {
+      empty.style.display = 'block';
+    }
+  } else {
+    renderRows(todayEntries);
+  }
+
+  function renderRows(entries){
+    entries.forEach(entry => {
+      entry.plataformas.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        const dupMatch = /duplicad/i.test(p.status);
+        if (dupMatch) hasDup = true;
+        const statusBadge = dupMatch
+          ? '<span class="badge-dup">' + p.status + '</span>'
+          : '<span class="badge-ok">' + p.status + '</span>';
+        tr.innerHTML = `
+          <td>${idx===0 ? entry.hora : ''}</td>
+          <td>${idx===0 ? entry.video : ''}</td>
+          <td>${idx===0 ? entry.bloco : ''}</td>
+          <td>${p.plataforma.charAt(0).toUpperCase()+p.plataforma.slice(1)} — ${p.pagina}</td>
+          <td>${statusBadge}</td>`;
+        tbody.appendChild(tr);
+      });
+    });
+    if (hasDup) document.getElementById('dup-alert').style.display = 'block';
+  }
+
+})();
+</script>
+</body>
+</html>
