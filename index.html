@@ -108,6 +108,37 @@
   footer{margin-top:48px;text-align:center;color:var(--muted);font-size:12px;}
   .note{background:rgba(255,204,77,0.08);border:1px solid rgba(255,204,77,0.25);border-radius:12px;padding:14px 18px;font-size:12.5px;color:#ffd873;margin-top:16px;}
   .note.red{background:rgba(255,92,108,0.08);border-color:rgba(255,92,108,0.3);color:#ffb3ba;}
+
+  /* ---- Assistente (chat) ---- */
+  .chat-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 24px rgba(0,229,199,0.35);z-index:1000;border:none;}
+  .chat-fab svg{width:26px;height:26px;}
+  .chat-panel{position:fixed;bottom:92px;right:24px;width:360px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 140px);background:var(--card);border:1px solid var(--card-border);border-radius:18px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 12px 48px rgba(0,0,0,0.5);z-index:1000;}
+  .chat-panel.open{display:flex;}
+  .chat-head{padding:14px 16px;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2);flex-shrink:0;}
+  .chat-head .title{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;}
+  .chat-head .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .chat-head button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:4px 6px;}
+  .chat-head button:hover{color:var(--text);}
+  .chat-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+  .chat-msg{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+  .chat-msg.user{align-self:flex-end;background:var(--accent3);color:#fff;border-bottom-right-radius:3px;}
+  .chat-msg.assistant{align-self:flex-start;background:var(--bg2);border:1px solid var(--card-border);border-bottom-left-radius:3px;}
+  .chat-msg.system{align-self:center;color:var(--muted);font-size:11.5px;text-align:center;max-width:100%;}
+  .chat-input-row{padding:12px;border-top:1px solid var(--card-border);display:flex;gap:8px;flex-shrink:0;}
+  .chat-input-row textarea{flex:1;resize:none;background:var(--bg2);border:1px solid var(--card-border);border-radius:10px;color:var(--text);padding:8px 10px;font-family:inherit;font-size:13px;max-height:80px;}
+  .chat-input-row button{background:var(--accent);border:none;border-radius:10px;padding:0 14px;font-weight:700;color:#0a0e17;cursor:pointer;}
+  .chat-input-row button:disabled{opacity:0.5;cursor:default;}
+  .chat-settings{padding:16px;display:none;flex-direction:column;gap:10px;overflow-y:auto;}
+  .chat-settings label{font-size:12px;color:var(--muted);}
+  .chat-settings input, .chat-settings select{background:var(--bg2);border:1px solid var(--card-border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;}
+  .chat-settings .save-btn{background:var(--accent);border:none;border-radius:8px;padding:9px;font-weight:700;color:#0a0e17;cursor:pointer;margin-top:4px;}
+  .chat-settings .hint{font-size:11px;color:var(--muted);line-height:1.6;}
+  .chat-settings a{color:var(--accent);}
+  .typing-dots span{display:inline-block;width:5px;height:5px;background:var(--muted);border-radius:50%;margin:0 1.5px;animation:blink 1.2s infinite;}
+  .typing-dots span:nth-child(2){animation-delay:.2s;}
+  .typing-dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
+  @media(max-width:480px){.chat-panel{right:16px;left:16px;width:auto;bottom:84px;}.chat-fab{right:16px;bottom:16px;}}
 </style>
 </head>
 <body>
@@ -290,6 +321,38 @@
 
 </div>
 
+<!-- Assistente (chat) — pergunte sobre as redes sociais usando a API da Anthropic direto do navegador -->
+<button class="chat-fab" id="chatFab" title="Perguntar sobre as redes sociais">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#0a0e17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="title"><span class="dot"></span> Assistente do Dashboard</div>
+    <div>
+      <button id="chatGear" title="Configurar chave de API">⚙️</button>
+      <button id="chatClose" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-settings" id="chatSettings">
+    <label>Chave de API da Anthropic (fica salva só neste navegador)</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+    <label>Modelo</label>
+    <select id="modelSelect">
+      <option value="claude-sonnet-5">Claude Sonnet 5 (recomendado)</option>
+      <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (mais rápido/barato)</option>
+      <option value="claude-opus-5">Claude Opus 5 (mais poderoso)</option>
+    </select>
+    <button class="save-btn" id="saveKeyBtn">Salvar</button>
+    <div class="hint">Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>. Ela fica guardada só no navegador deste computador — não passa por mais ninguém além da própria Anthropic quando você pergunta algo. Cada pergunta tem um custo pequeno (poucos centavos) cobrado na sua conta da Anthropic.</div>
+  </div>
+  <div class="chat-input-row" id="chatInputRow">
+    <textarea id="chatInput" rows="1" placeholder="Pergunte sobre suas redes sociais..."></textarea>
+    <button id="chatSend">➤</button>
+  </div>
+</div>
+
 <!-- DASHBOARD_DATA_START — a tarefa agendada edita SÓ o conteúdo entre estes marcadores (não mexe no resto do arquivo) -->
 <script>
 const DASHBOARD_DATA = {
@@ -428,6 +491,143 @@ const POSTAGENS_LOG = [
     if (hasDup) document.getElementById('dup-alert').style.display = 'block';
   }
 
+})();
+</script>
+
+<script>
+(function(){
+  // ---- Assistente do dashboard: chama a API da Anthropic direto do navegador (BYOK) ----
+  const STORAGE_KEY = 'novelinha_dash_api_key';
+  const STORAGE_MODEL = 'novelinha_dash_model';
+
+  const fab = document.getElementById('chatFab');
+  const panel = document.getElementById('chatPanel');
+  const closeBtn = document.getElementById('chatClose');
+  const gearBtn = document.getElementById('chatGear');
+  const settingsEl = document.getElementById('chatSettings');
+  const inputRow = document.getElementById('chatInputRow');
+  const bodyEl = document.getElementById('chatBody');
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSend');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const modelSelect = document.getElementById('modelSelect');
+  const saveKeyBtn = document.getElementById('saveKeyBtn');
+
+  let history = []; // [{role:'user'|'assistant', content:'...'}]
+
+  function getKey(){ try{ return localStorage.getItem(STORAGE_KEY) || ''; }catch(e){ return ''; } }
+  function getModel(){ try{ return localStorage.getItem(STORAGE_MODEL) || 'claude-sonnet-5'; }catch(e){ return 'claude-sonnet-5'; } }
+  function setKey(v){ try{ localStorage.setItem(STORAGE_KEY, v); }catch(e){} }
+  function setModel(v){ try{ localStorage.setItem(STORAGE_MODEL, v); }catch(e){} }
+
+  function showSettings(show){
+    settingsEl.style.display = show ? 'flex' : 'none';
+    inputRow.style.display = show ? 'none' : 'flex';
+    if (show){
+      apiKeyInput.value = getKey();
+      modelSelect.value = getModel();
+    }
+  }
+
+  function addMsg(role, text){
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + role;
+    div.textContent = text;
+    bodyEl.appendChild(div);
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+    return div;
+  }
+  function addSystemMsg(text){ addMsg('system', text); }
+
+  fab.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open') && bodyEl.children.length === 0){
+      if (!getKey()){
+        addSystemMsg('Configure sua chave de API da Anthropic (ícone ⚙️ acima) pra começar a perguntar.');
+        showSettings(true);
+      } else {
+        addSystemMsg('Pergunte qualquer coisa sobre seus vídeos, plataformas, faturamento ou comentários — respondo com base nos dados deste dashboard.');
+      }
+    }
+  });
+  closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+  gearBtn.addEventListener('click', () => showSettings(settingsEl.style.display !== 'flex'));
+  saveKeyBtn.addEventListener('click', () => {
+    setKey(apiKeyInput.value.trim());
+    setModel(modelSelect.value);
+    showSettings(false);
+    addSystemMsg('Chave salva. Pode perguntar!');
+  });
+
+  function buildSystemPrompt(){
+    const dd = (typeof DASHBOARD_DATA !== 'undefined') ? DASHBOARD_DATA : {};
+    const log = (typeof POSTAGENS_LOG !== 'undefined') ? POSTAGENS_LOG : [];
+    return "Você é um assistente integrado ao dashboard de uma operação de conteúdo de novelinha (dramas curtos dublados, cortados em blocos de 60s) do usuário Vv, publicados no TikTok, Facebook (páginas 'Acesso Viral' e 'Conteúdo Viral'), YouTube Shorts e Kwai, com uma automação que edita os vídeos, posta nas plataformas e responde comentários. Responda SEMPRE em português do Brasil, de forma direta, curta e útil. Baseie suas respostas nos dados abaixo, que são um retrato deste dashboard no momento em que foi atualizado pela última vez (podem não refletir números em tempo real das plataformas — avise disso quando fizer diferença pra resposta). Se a pergunta não puder ser respondida com esses dados, diga isso claramente e sugira o que precisaria ser checado manualmente (ex: abrir o TikTok Studio, o Painel Profissional do Facebook, etc).\n\nDASHBOARD_DATA (KPIs, faturamento, seguidores):\n" + JSON.stringify(dd, null, 2) + "\n\nPOSTAGENS_LOG (histórico de publicações, mais recentes primeiro):\n" + JSON.stringify(log, null, 2);
+  }
+
+  async function sendMessage(){
+    const text = input.value.trim();
+    if (!text) return;
+    const key = getKey();
+    if (!key){
+      addSystemMsg('Configure sua chave de API primeiro (ícone ⚙️).');
+      showSettings(true);
+      return;
+    }
+    addMsg('user', text);
+    history.push({role:'user', content: text});
+    input.value = '';
+    input.style.height = 'auto';
+    sendBtn.disabled = true;
+    const thinking = addMsg('assistant', '');
+    thinking.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+
+    try{
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: getModel(),
+          max_tokens: 1024,
+          system: buildSystemPrompt(),
+          messages: history
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok){
+        const msg = (data && data.error && data.error.message) ? data.error.message : ('Erro HTTP ' + resp.status);
+        thinking.textContent = '⚠️ ' + msg;
+        thinking.className = 'chat-msg system';
+        history.pop();
+      } else {
+        const answer = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '(sem resposta)';
+        thinking.textContent = answer;
+        thinking.className = 'chat-msg assistant';
+        history.push({role:'assistant', content: answer});
+      }
+    } catch(err){
+      thinking.textContent = '⚠️ Não consegui falar com a API (' + (err && err.message ? err.message : 'erro de rede') + '). Se você abriu este arquivo com duplo-clique, tente acessar pelo link hospedado do dashboard em vez do arquivo local.';
+      thinking.className = 'chat-msg system';
+      history.pop();
+    } finally {
+      sendBtn.disabled = false;
+      bodyEl.scrollTop = bodyEl.scrollHeight;
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 80) + 'px';
+  });
 })();
 </script>
 </body>
